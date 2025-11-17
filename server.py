@@ -5,8 +5,7 @@ import time
 import os
 
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'file://'])
-
+CORS(app, origins=['*'])
 # Rate limiting storage
 request_counts = {}
 RATE_LIMIT = 10  # 10 requests per hour per API key
