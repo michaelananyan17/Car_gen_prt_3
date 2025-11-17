@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Press Photo Generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        
+        .image-display-container {
+            width: 100%;
+            height: 500px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-display-container.has-image {
+            border: 2px solid #10a37f;
+            background-color: #f0f8ff;
+        }
+        
+        .placeholder-text {
+            color: #7f8c8d;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .placeholder-icon {
+            font-size: 48px;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            width: 100%;
+        }
+        
+        .description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #7f8c8d;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #fff;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #10a37f;
+            box-shadow: 0 0 5px rgba(16, 163, 127, 0.3);
+        }
+        
+        button {
+            background-color: #10a37f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0d8c6c;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .api-key-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .car-image {
+            max-width: 100%;
+            max-height: 450px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #10a37f;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+            padding: 10px;
+            background-color: #fdf2f2;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .success-message {
+            color: #27ae60;
+            margin-top: 10px;
+            display: none;
+            padding: 10px;
+            background-color: #f2fdf2;
+            border-radius: 5px;
+            border: 1px solid #c6f5c6;
+        }
+        
+        .file-upload-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .file-upload-section.active {
+            border-color: #10a37f;
+            background-color: #f0f8ff;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: block;
+            padding: 10px;
+            cursor: pointer;
+            color: #10a37f;
+            font-weight: 600;
+        }
+        
+        .file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .instructions {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .car-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .api-info {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .server-config {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .server-config h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .file-size-warning {
+            color: #e67e22;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                width: 100%;
+            }
+            
+            .image-display-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Car Press Photo Generator</h1>
+        <p class="description">Upload a car dataset and generate a press photo with no background using the OpenAI API</p>
+        
+        <div class="left-panel">
+            <div class="file-upload-section" id="file-upload-section">
+                <label for="csv-file" class="file-label">Click to upload car dataset (CSV)</label>
+                <input type="file" id="csv-file" class="file-input" accept=".csv">
+                <div class="file-name" id="file-name">No file selected</div>
+                <div class="file-size-warning" id="file-size-warning">Large files may take longer to process</div>
+                <div class="instructions">CSV should have columns: car brand, car model, manufacturing year</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="brand">Car Manufacturer</label>
+                <select id="brand" disabled>
+                    <option value="">Select a manufacturer</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="model">Car Model</label>
+                <select id="model" disabled>
+                    <option value="">Select a model</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="year">Manufacturing Year</label>
+                <select id="year" disabled>
+                    <option value="">Select a year</option>
+                </select>
+            </div>
+            
+            <div class="api-key-section">
+                <label for="api-key">OpenAI API Key</label>
+                <input type="password" id="api-key" placeholder="Enter your OpenAI API key">
+                <div class="api-info">Your API key is sent securely to our proxy server and never stored</div>
+                <button id="submit-api-key">Submit API Key</button>
+                <div id="api-key-message" class="success-message">API key submitted successfully!</div>
+            </div>
+            
+            <div class="server-config">
+                <h3>Server Configuration</h3>
+                <label for="server-url">Backend Server URL</label>
+                <input type="text" id="server-url" placeholder="http://localhost:3000" value="http://localhost:3000">
+                <div class="instructions">Make sure your backend server is running at this URL</div>
+            </div>
+            
+            <button id="generate-button" disabled>Generate My Car</button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Generating your car photo with OpenAI...</p>
+            </div>
+            
+            <div class="result-section">
+                <div id="error-message" class="error-message"></div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="image-display-container" id="image-display-container">
+                <div class="placeholder-icon">🚗</div>
+                <div class="placeholder-text">Your generated car photo will appear here</div>
+                <img id="car-image" class="car-image" alt="Generated car photo">
+            </div>
+            <div class="car-info" id="car-info"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let carData = [];
+        let apiKey = '';
+        let serverUrl = 'http://localhost:3000';
+        
+        // DOM elements
+        const fileUploadSection = document.getElementById('file-upload-section');
+        const csvFileInput = document.getElementById('csv-file');
+        const fileNameDisplay = document.getElementById('file-name');
+        const fileSizeWarning = document.getElementById('file-size-warning');
+        const brandSelect = document.getElementById('brand');
+        const modelSelect = document.getElementById('model');
+        const yearSelect = document.getElementById('year');
+        const apiKeyInput = document.getElementById('api-key');
+        const serverUrlInput = document.getElementById('server-url');
+        const submitApiKeyButton = document.getElementById('submit-api-key');
+        const apiKeyMessage = document.getElementById('api-key-message');
+        const generateButton = document.getElementById('generate-button');
+        const loadingIndicator = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const carImage = document.getElementById('car-image');
+        const imageDisplayContainer = document.getElementById('image-display-container');
+        const carInfo = document.getElementById('car-info');
+        
+        // Sample car data for testing if no CSV is uploaded
+        const sampleCarData = [
+            {"brand": "toyota", "model": "camry", "year": 2020},
+            {"brand": "honda", "model": "civic", "year": 2019},
+            {"brand": "ford", "model": "mustang", "year": 2021},
+            {"brand": "chevrolet", "model": "corvette", "year": 2022},
+            {"brand": "bmw", "model": "3 series", "year": 2020},
+            {"brand": "audi", "model": "a4", "year": 2021},
+            {"brand": "mercedes", "model": "c-class", "year": 2019},
+            {"brand": "tesla", "model": "model 3", "year": 2022}
+        ];
+        
+        // Initialize with sample data
+        window.addEventListener('DOMContentLoaded', function() {
+            carData = sampleCarData;
+            populateDropdowns();
+            brandSelect.disabled = false;
+            
+            // Load server URL from localStorage if available
+            const savedServerUrl = localStorage.getItem('carGeneratorServerUrl');
+            if (savedServerUrl) {
+                serverUrlInput.value = savedServerUrl;
+                serverUrl = savedServerUrl;
+            }
+        });
+        
+        // Server URL change handler
+        serverUrlInput.addEventListener('change', function() {
+            serverUrl = this.value.trim();
+            localStorage.setItem('carGeneratorServerUrl', serverUrl);
+        });
+        
+        // File upload handling
+        csvFileInput.addEventListener('change', handleFileUpload);
+        
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Check file size (limit to 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                showError('File too large. Please select a CSV file smaller than 5MB.');
+                csvFileInput.value = '';
+                fileNameDisplay.textContent = 'No file selected';
+                return;
+            }
+            
+            fileNameDisplay.textContent = file.name;
+            
+            // Show warning for files over 1MB
+            if (file.size > 1024 * 1024) {
+                fileSizeWarning.style.display = 'block';
+            } else {
+                fileSizeWarning.style.display = 'none';
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csvContent = e.target.result;
+                    parseCSVData(csvContent);
+                } catch (error) {
+                    showError('Error parsing CSV file: ' + error.message);
+                    // Fall back to sample data
+                    carData = sampleCarData;
+                    populateDropdowns();
+                }
+            };
+            reader.onerror = function() {
+                showError('Error reading file');
+                // Fall back to sample data
+                carData = sampleCarData;
+                populateDropdowns();
+            };
+            reader.readAsText(file);
+        }
+        
+        function parseCSVData(csvContent) {
+            // Reset car data
+            carData = [];
+            
+            // Split CSV into lines
+            const lines = csvContent.split('\n');
+            
+            // Check if we have at least a header and one data row
+            if (lines.length < 2) {
+                showError('CSV file must contain at least a header and one data row. Using sample data instead.');
+                carData = sampleCarData;
+                populateDropdowns();
+                return;
+            }
+            
+            // Parse header to find column indices
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+            const brandIndex = headers.findIndex(h => h.includes('brand'));
+            const modelIndex = headers.findIndex(h => h.includes('model'));
+            const yearIndex = headers.findIndex(h => h.includes('year'));
+            
+            if (brandIndex === -1 || modelIndex === -1 || yearIndex === -1) {
+                showError('CSV must contain columns: car brand, car model, manufacturing year. Using sample data instead.');
+                carData = sampleCarData;
+                populateDropdowns();
+                return;
+            }
+            
+            // Parse data rows
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Simple CSV parsing - split by comma but handle quoted values
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current.trim().replace(/"/g, ''));
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current.trim().replace(/"/g, ''));
+                
+                if (values.length >= Math.max(brandIndex, modelIndex, yearIndex) + 1) {
+                    const brand = values[brandIndex];
+                    const model = values[modelIndex];
+                    const year = parseInt(values[yearIndex]);
+                    
+                    if (brand && model && !isNaN(year)) {
+                        carData.push({
+                            brand: brand.toLowerCase(),
+                            model: model.toLowerCase(),
+                            year: year
+                        });
+                    }
+                }
+            }
+            
+            if (carData.length === 0) {
+                showError('No valid car data found in CSV. Using sample data instead.');
+                carData = sampleCarData;
+            }
+            
+            // Populate dropdowns
+            populateDropdowns();
+            clearError();
+            
+            // Enable brand selection
+            brandSelect.disabled = false;
+        }
+        
+        function populateDropdowns() {
+            // Clear existing options
+            brandSelect.innerHTML = '<option value="">Select a manufacturer</option>';
+            modelSelect.innerHTML = '<option value="">Select a model</option>';
+            yearSelect.innerHTML = '<option value="">Select a year</option>';
+            
+            // Get unique brands
+            const brands = [...new Set(carData.map(car => car.brand))].sort();
+            brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
+                brandSelect.appendChild(option);
+            });
+        }
+        
+        // Brand selection handler
+        brandSelect.addEventListener('change', function() {
+            const selectedBrand = this.value;
+            
+            // Clear model and year dropdowns
+            modelSelect.innerHTML = '<option value="">Select a model</option>';
+            yearSelect.innerHTML = '<option value="">Select a year</option>';
+            modelSelect.disabled = true;
+            yearSelect.disabled = true;
+            
+            if (!selectedBrand) return;
+            
+            // Get models for selected brand
+            const models = [...new Set(carData
+                .filter(car => car.brand === selectedBrand)
+                .map(car => car.model))].sort();
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model.charAt(0).toUpperCase() + model.slice(1);
+                modelSelect.appendChild(option);
+            });
+            
+            modelSelect.disabled = false;
+        });
+        
+        // Model selection handler - FIXED: Added missing closing brace
+        modelSelect.addEventListener('change', function() {
+            const selectedBrand = brandSelect.value;
+            const selectedModel = this.value;
+            
+            // Clear year dropdown
+            yearSelect.innerHTML = '<option value="">Select a year</option>';
+            yearSelect.disabled = true;
+            
+            if (!selectedBrand || !selectedModel) return;
+            
+            // Get years for selected brand and model
+            const years = [...new Set(carData
+                .filter(car => car.brand === selectedBrand && car.model === selectedModel)
+                .map(car => car.year))].sort((a, b) => a - b);
+            
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+            
+            yearSelect.disabled = false;
+        }); // FIXED: This closing brace was missing
+        
+        // Year selection handler
+        yearSelect.addEventListener('change', function() {
+            updateGenerateButtonState();
+        });
+        
+        // API key submission
+        submitApiKeyButton.addEventListener('click', function() {
+            apiKey = apiKeyInput.value.trim();
+            
+            if (!apiKey) {
+                showError('Please enter your OpenAI API key');
+                return;
+            }
+            
+            // Validate OpenAI API key format (starts with sk- and is at least 20 chars)
+            if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+                showError('Please enter a valid OpenAI API key (should start with "sk-" and be at least 20 characters)');
+                return;
+            }
+            
+            apiKeyMessage.style.display = 'block';
+            clearError();
+            updateGenerateButtonState();
+        });
+        
+        // Generate button handler
+        generateButton.addEventListener('click', generateCarPhoto);
+        
+        function updateGenerateButtonState() {
+            const hasValidSelection = brandSelect.value && modelSelect.value && yearSelect.value;
+            generateButton.disabled = !(hasValidSelection && apiKey);
+        }
+        
+        async function generateCarPhoto() {
+            const brand = brandSelect.value;
+            const model = modelSelect.value;
+            const year = yearSelect.value;
+            
+            if (!brand || !model || !year || !apiKey) {
+                showError('Please complete all selections and provide an API key');
+                return;
+            }
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'block';
+            carImage.style.display = 'none';
+            carInfo.style.display = 'none';
+            generateButton.disabled = true;
+            clearError();
+            
+            // Prepare prompt for OpenAI API
+            const prompt = `Professional press photo of a ${year} ${brand} ${model} car, studio lighting, clean background, 3/4 front view, high detail, photorealistic`;
+            
+            // Call our backend proxy server
+            try {
+                await callBackendProxy(prompt, brand, model, year);
+            } catch (error) {
+                showError('Error generating image: ' + error.message);
+                loadingIndicator.style.display = 'none';
+                generateButton.disabled = false;
+            }
+        }
+        
+        // Function to call our backend proxy server
+        async function callBackendProxy(prompt, brand, model, year) {
+            try {
+                const response = await fetch(`${serverUrl}/generate-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        apiKey: apiKey
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage = `Server error: ${response.status}`;
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (!data.imageUrl) {
+                    throw new Error('No image URL returned from server');
+                }
+                
+                // Display the image
+                carImage.src = data.imageUrl;
+                carImage.style.display = 'block';
+                
+                // Update the display container to show it has an image
+                imageDisplayContainer.classList.add('has-image');
+                
+                // Show car info
+                carInfo.innerHTML = `<strong>${year} ${brand.charAt(0).toUpperCase() + brand.slice(1)} ${model.charAt(0).toUpperCase() + model.slice(1)}</strong> - Generated with OpenAI DALL-E`;
+                carInfo.style.display = 'block';
+                
+                // Hide loading indicator
+                loadingIndicator.style.display = 'none';
+                generateButton.disabled = false;
+                
+            } catch (error) {
+                if (error.message.includes('Failed to fetch')) {
+                    throw new Error(`Cannot connect to backend server at ${serverUrl}. Make sure it's running.`);
+                }
+                throw error;
+            }
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        function clearError() {
+            errorMessage.style.display = 'none';
+        }
+        
+        // Drag and drop functionality for file upload
+        fileUploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileUploadSection.classList.add('active');
+        });
+        
+        fileUploadSection.addEventListener('dragleave', function() {
+            fileUploadSection.classList.remove('active');
+        });
+        
+        fileUploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            fileUploadSection.classList.remove('active');
+            
+            if (e.dataTransfer.files.length) {
+                csvFileInput.files = e.dataTransfer.files;
+                handleFileUpload({ target: { files: e.dataTransfer.files } });
+            }
+        });
+    </script>
+</body>
+</html>
