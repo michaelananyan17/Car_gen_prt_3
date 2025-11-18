@@ -6,10 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware with security restrictions
-app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'file://'],
-    credentials: false
-}));
+// MODIFIED: Removed the specific 'origin' list to allow all origins ('*')
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // Rate limiting middleware
